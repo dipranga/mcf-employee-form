@@ -208,17 +208,39 @@
 
     <div class="field">
       <label for="designation">Designation <span class="required-mark">*</span></label>
-      <input type="text" id="designation" name="Designation" required autocomplete="off">
+      <select id="designation" name="Designation" required>
+        <option value="" disabled selected>Select designation</option>
+      </select>
+    </div>
+
+    <div class="field" id="designationOtherWrap" style="display:none;">
+      <label for="designationOther">Please specify designation <span class="required-mark">*</span></label>
+      <input type="text" id="designationOther" name="Designation (Other)" autocomplete="off">
     </div>
 
     <div class="row2">
       <div class="field">
         <label for="wardNo">Ward No. <span class="hint">(if applicable)</span></label>
-        <input type="text" id="wardNo" name="Ward No" autocomplete="off">
+        <select id="wardNo" name="Ward No">
+          <option value="" selected>Not applicable</option>
+        </select>
       </div>
       <div class="field">
         <label for="zoneNo">Zone No. <span class="hint">(if applicable)</span></label>
-        <input type="text" id="zoneNo" name="Zone No" autocomplete="off">
+        <select id="zoneNo" name="Zone No">
+          <option value="" selected>Not applicable</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field" id="wardOtherWrap" style="display:none;">
+        <label for="wardOther">Please specify ward no.</label>
+        <input type="text" id="wardOther" name="Ward No (Other)" autocomplete="off">
+      </div>
+      <div class="field" id="zoneOtherWrap" style="display:none;">
+        <label for="zoneOther">Please specify zone no.</label>
+        <input type="text" id="zoneOther" name="Zone No (Other)" autocomplete="off">
       </div>
     </div>
 
@@ -301,6 +323,42 @@ const branchData = {
   "RTI Cell": []
 };
 
+/* ====== DATA: DESIGNATIONS ====== */
+// Edit this list freely to match your office's actual designation set.
+const designationData = [
+  "Commissioner",
+  "Additional Commissioner",
+  "Joint Commissioner",
+  "Executive Engineer",
+  "Sub Divisional Engineer (SDE)",
+  "Junior Engineer (JE)",
+  "Superintendent",
+  "Section Officer",
+  "Accountant",
+  "Senior Assistant",
+  "Junior Assistant",
+  "Clerk",
+  "Steno",
+  "Personal Assistant (PA)",
+  "Tax Inspector",
+  "Tax Sub-Inspector",
+  "Sanitary Inspector",
+  "Sanitary Supervisor",
+  "Draftsman",
+  "Computer Operator",
+  "Data Entry Operator",
+  "Driver",
+  "Peon",
+  "Chowkidar",
+  "Safai Karamchari",
+  "Other"
+];
+
+/* ====== DATA: WARD NO. / ZONE NO. ====== */
+// Edit these ranges to match your corporation's actual ward/zone count.
+const wardCount = 25;
+const zoneCount = 6;
+
 /* ====== DATA: AREA -> ROOM NO. ====== */
 function roomsForArea(){
   return ["001", "002", "003", "004", "005"];
@@ -351,6 +409,61 @@ branchSelect.addEventListener("change", function(){
     subBranchSelect.setAttribute("required", "required");
   }
 });
+
+/* ====== BUILD DESIGNATION DROPDOWN ====== */
+const designationSelect = document.getElementById("designation");
+designationData.forEach(function(d){
+  const opt = document.createElement("option");
+  opt.value = d;
+  opt.textContent = d;
+  designationSelect.appendChild(opt);
+});
+
+const designationOtherWrap = document.getElementById("designationOtherWrap");
+const designationOtherInput = document.getElementById("designationOther");
+designationSelect.addEventListener("change", function(){
+  if (this.value === "Other"){
+    designationOtherWrap.style.display = "block";
+    designationOtherInput.setAttribute("required", "required");
+  } else {
+    designationOtherWrap.style.display = "none";
+    designationOtherInput.removeAttribute("required");
+    designationOtherInput.value = "";
+  }
+});
+
+/* ====== BUILD WARD NO. / ZONE NO. DROPDOWNS ====== */
+function buildNumberedSelect(selectEl, count, otherWrapEl, otherInputEl){
+  for (let i = 1; i <= count; i++){
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = String(i);
+    selectEl.appendChild(opt);
+  }
+  const otherOpt = document.createElement("option");
+  otherOpt.value = "Other";
+  otherOpt.textContent = "Other";
+  selectEl.appendChild(otherOpt);
+
+  selectEl.addEventListener("change", function(){
+    if (this.value === "Other"){
+      otherWrapEl.style.display = "block";
+    } else {
+      otherWrapEl.style.display = "none";
+      otherInputEl.value = "";
+    }
+  });
+}
+
+const wardSelect = document.getElementById("wardNo");
+const wardOtherWrap = document.getElementById("wardOtherWrap");
+const wardOtherInput = document.getElementById("wardOther");
+buildNumberedSelect(wardSelect, wardCount, wardOtherWrap, wardOtherInput);
+
+const zoneSelect = document.getElementById("zoneNo");
+const zoneOtherWrap = document.getElementById("zoneOtherWrap");
+const zoneOtherInput = document.getElementById("zoneOther");
+buildNumberedSelect(zoneSelect, zoneCount, zoneOtherWrap, zoneOtherInput);
 
 /* ====== BUILD AREA DROPDOWN ====== */
 const areaSelect = document.getElementById("area");
@@ -416,6 +529,10 @@ form.addEventListener("submit", function(e){
       subBranchSelect.disabled = true;
       roomSelect.innerHTML = '<option value="" disabled selected>Select area first</option>';
       roomSelect.disabled = true;
+      designationOtherWrap.style.display = "none";
+      designationOtherInput.removeAttribute("required");
+      wardOtherWrap.style.display = "none";
+      zoneOtherWrap.style.display = "none";
       statusMsg.textContent = "";
     } else {
       throw new Error(data.error || "Unknown error");
