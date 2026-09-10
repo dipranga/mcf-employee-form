@@ -294,7 +294,7 @@
 /* ====== CONFIGURATION ====== */
 
 // Paste your deployed Google Apps Script Web App URL here
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-52cDGEAZqxBEKl2Lea4jjUh7nR1KTFnSJPAswUu_QPSKwxBVz6oWVQrsoTbeV8c1/exec";
+const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 /* ====== DATA: BRANCH -> SUB-BRANCH ====== */
 // A branch with an empty array has no sub-branches (dropdown stays disabled / "Not applicable").
@@ -515,31 +515,45 @@ form.addEventListener("submit", function(e){
   banner.className = "banner";
 
   const formData = new FormData(form);
+  const MAX_ATTEMPTS = 4;
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: formData
-  })
-  .then(function(res){ return res.json(); })
-  .then(function(data){
-    if (data.result === "success"){
-      showBanner("ok", "Thank you. Your details have been recorded successfully.");
-      form.reset();
-      subBranchSelect.innerHTML = '<option value="" selected>Not applicable</option>';
-      subBranchSelect.disabled = true;
-      roomSelect.innerHTML = '<option value="" disabled selected>Select area first</option>';
-      roomSelect.disabled = true;
-      designationOtherWrap.style.display = "none";
-      designationOtherInput.removeAttribute("required");
-      wardOtherWrap.style.display = "none";
-      zoneOtherWrap.style.display = "none";
-      statusMsg.textContent = "";
-    } else {
-      throw new Error(data.error || "Unknown error");
-    }
+  function attemptSubmit(attempt){
+    return fetch(SCRIPT_URL, { method: "POST", body: formData })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.result === "success"){
+          return data;
+        }
+        throw new Error(data.error || "Unknown error");
+      })
+      .catch(function(err){
+        if (attempt < MAX_ATTEMPTS){
+          const waitMs = 1000 * Math.pow(2, attempt - 1); // 1s, 2s, 4s, 8s
+          statusMsg.textContent = "Server busy, retrying… (attempt " + (attempt + 1) + " of " + MAX_ATTEMPTS + ")";
+          return new Promise(function(resolve){
+            setTimeout(function(){ resolve(attemptSubmit(attempt + 1)); }, waitMs);
+          });
+        }
+        throw err;
+      });
+  }
+
+  attemptSubmit(1)
+  .then(function(){
+    showBanner("ok", "Thank you. Your details have been recorded successfully.");
+    form.reset();
+    subBranchSelect.innerHTML = '<option value="" selected>Not applicable</option>';
+    subBranchSelect.disabled = true;
+    roomSelect.innerHTML = '<option value="" disabled selected>Select area first</option>';
+    roomSelect.disabled = true;
+    designationOtherWrap.style.display = "none";
+    designationOtherInput.removeAttribute("required");
+    wardOtherWrap.style.display = "none";
+    zoneOtherWrap.style.display = "none";
+    statusMsg.textContent = "";
   })
   .catch(function(err){
-    showBanner("err", "Something went wrong. Please try again.");
+    showBanner("err", "Server is busy right now. Please wait a moment and try submitting again.");
     statusMsg.textContent = "";
     console.error(err);
   })
