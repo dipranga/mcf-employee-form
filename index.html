@@ -199,11 +199,18 @@
       </div>
 
       <div class="field">
-        <label for="subBranch">Sub-Branch <span class="hint">(if applicable)</span></label>
-        <select id="subBranch" name="Sub-Branch" disabled>
+        <label for="subBranch">Sub-Branch <span class="required-mark">*</span></label>
+        <select id="subBranch" name="Sub-Branch" required>
           <option value="" selected>Not applicable</option>
         </select>
       </div>
+    </div>
+
+    <div class="field">
+      <label for="office">Office <span class="hint">(if applicable)</span></label>
+      <select id="office" name="Office" disabled>
+        <option value="" selected>Not applicable</option>
+      </select>
     </div>
 
     <div class="field">
@@ -300,10 +307,11 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-52cDGEAZqxBEKl2Le
 // A branch with an empty array has no sub-branches (dropdown stays disabled / "Not applicable").
 const branchData = {
   "Mayor": [],
-  "Commissionar (CMC)": [],
-  "Additional Commissioner": ["ACMC-I", "ACMC-II"],
-  "Joint Commissioner": [],
-  "Engineering Branch": ["Div-I", "Div-II", "Div-III"],
+  "Commissioner (CMC)": ["Commissioner Office"],
+  "Additional Commissioner": ["ACMC-I Office", "ACMC-II Office"],
+  "Additional Municipal Commissioner": ["AMC Office"],
+  "Joint Commissioner": ["Joint Commissioner HQ (JCHQ)", "Joint Commissioner Town (JCT)", "Joint Commissioner Faridabad (JCF)", "Joint Commissioner Ballabgarh (JCB)", "Joint Commissioner Gr. Faridabad (JCGF)"],
+  "Engineering Branch": ["CE-I Office", "CE-II Office", "SE-I Office", "SE-II Office", "Swachh Bharat Mission (SBM) Office", "Div-HQ", "Div-I", "Div-II", "Div-III", "Div-IV", "Div-V", "CCIP", "Advertisement Branch", "Enforcement Branch", "Survey", "Vehicle Branch", "Electrical Branch"],
   "Corporation Secretary (CS)": [],
   "Establishment Branch (EO)": [],
   "Planning Branch": [],
@@ -321,6 +329,17 @@ const branchData = {
   "AMRUT 2.0": [],
   "CM Window": [],
   "RTI Cell": []
+};
+
+/* ====== DATA: SUB-BRANCH -> OFFICE ======
+ * Key format: "Branch||Sub-Branch" (exact strings from branchData above).
+ * A key with no entry here means Office stays "Not applicable" for that sub-branch.
+ * FILL THIS IN with your real office lists — this is a placeholder structure only.
+ */
+const officeData = {
+  // Example — replace with real data:
+  "Engineering Branch||Enforcement Branch": ["Enforcement Branch (NIT & Badkhal)", "Enforcement Branch (Old)", "Enforcement Branch (BLB)", "Enforcement Branch (Chandawali)"],
+  "Engineering Branch||Survey": ["Survey (NIT)", "Survey (OLD)", "Survey (BLB)"]
 };
 
 /* ====== DATA: DESIGNATIONS ====== */
@@ -379,6 +398,42 @@ Object.keys(branchData).forEach(function(branch){
 });
 
 const subBranchSelect = document.getElementById("subBranch");
+const officeSelect = document.getElementById("office");
+
+function resetOfficeDropdown(){
+  officeSelect.innerHTML = '<option value="" selected>Not applicable</option>';
+  officeSelect.disabled = true;
+  officeSelect.removeAttribute("required");
+}
+
+function refreshOfficeDropdown(){
+  const branch = branchSelect.value;
+  const sub = subBranchSelect.value;
+  const key = branch + "||" + sub;
+  const offices = officeData[key] || [];
+
+  if (!sub || offices.length === 0){
+    resetOfficeDropdown();
+    return;
+  }
+
+  officeSelect.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select office";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  officeSelect.appendChild(placeholder);
+
+  offices.forEach(function(o){
+    const opt = document.createElement("option");
+    opt.value = o;
+    opt.textContent = o;
+    officeSelect.appendChild(opt);
+  });
+  officeSelect.disabled = false;
+}
+
 branchSelect.addEventListener("change", function(){
   const subs = branchData[this.value] || [];
   subBranchSelect.innerHTML = "";
@@ -408,6 +463,12 @@ branchSelect.addEventListener("change", function(){
     subBranchSelect.disabled = false;
     subBranchSelect.setAttribute("required", "required");
   }
+
+  resetOfficeDropdown();
+});
+
+subBranchSelect.addEventListener("change", function(){
+  refreshOfficeDropdown();
 });
 
 /* ====== BUILD DESIGNATION DROPDOWN ====== */
@@ -544,6 +605,7 @@ form.addEventListener("submit", function(e){
     form.reset();
     subBranchSelect.innerHTML = '<option value="" selected>Not applicable</option>';
     subBranchSelect.disabled = true;
+    resetOfficeDropdown();
     roomSelect.innerHTML = '<option value="" disabled selected>Select area first</option>';
     roomSelect.disabled = true;
     designationOtherWrap.style.display = "none";
