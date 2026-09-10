@@ -190,6 +190,11 @@
       <input type="text" id="fullName" name="Full Name" required autocomplete="off">
     </div>
 
+    <div class="field">
+      <label for="birthDate">Date of Birth</label>
+      <input type="date" id="birthDate" name="Birth Date" autocomplete="off">
+    </div>
+
     <div class="row2">
       <div class="field">
         <label for="branch">Branch <span class="required-mark">*</span></label>
@@ -214,61 +219,52 @@
     </div>
 
     <div class="field">
-      <label for="designation">Designation <span class="required-mark">*</span></label>
-      <select id="designation" name="Designation" required>
+      <label for="designation">Designation</label>
+      <select id="designation" name="Designation">
         <option value="" disabled selected>Select designation</option>
       </select>
     </div>
 
     <div class="field" id="designationOtherWrap" style="display:none;">
-      <label for="designationOther">Please specify designation <span class="required-mark">*</span></label>
+      <label for="designationOther">Please specify designation</label>
       <input type="text" id="designationOther" name="Designation (Other)" autocomplete="off">
     </div>
 
-    <div class="row2">
-      <div class="field">
-        <label for="wardNo">Ward No. <span class="hint">(if applicable)</span></label>
-        <select id="wardNo" name="Ward No">
-          <option value="" selected>Not applicable</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="zoneNo">Zone No. <span class="hint">(if applicable)</span></label>
-        <select id="zoneNo" name="Zone No">
-          <option value="" selected>Not applicable</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row2">
-      <div class="field" id="wardOtherWrap" style="display:none;">
-        <label for="wardOther">Please specify ward no.</label>
-        <input type="text" id="wardOther" name="Ward No (Other)" autocomplete="off">
-      </div>
-      <div class="field" id="zoneOtherWrap" style="display:none;">
-        <label for="zoneOther">Please specify zone no.</label>
-        <input type="text" id="zoneOther" name="Zone No (Other)" autocomplete="off">
-      </div>
+    <div class="field">
+      <label for="employmentType">Type of Employment</label>
+      <select id="employmentType" name="Type of Employment">
+        <option value="" selected>Not specified</option>
+        <option value="Regular">Regular</option>
+        <option value="HKRNL">HKRNL</option>
+        <option value="HARTRON">HARTRON</option>
+        <option value="Deputation">Deputation</option>
+        <option value="Other">Other</option>
+      </select>
     </div>
 
     <div class="field">
-      <label for="empNo">Employee No. / HKRN Code <span class="required-mark">*</span></label>
-      <input type="text" id="empNo" name="Employee No / HKRN Code" required autocomplete="off">
+      <label for="wardNo">Ward No. <span class="hint">(if applicable)</span></label>
+      <select id="wardNo" name="Ward No">
+        <option value="" selected>Not applicable</option>
+      </select>
+    </div>
+
+    <div class="field" id="wardOtherWrap" style="display:none;">
+      <label for="wardOther">Please specify ward no.</label>
+      <input type="text" id="wardOther" name="Ward No (Other)" autocomplete="off">
     </div>
 
     <div class="row2">
       <div class="field">
-        <label for="area">Area <span class="required-mark">*</span></label>
-        <select id="area" name="Area" required>
-          <option value="" disabled selected>Select area</option>
+        <label for="area">Area <span class="hint">(if applicable)</span></label>
+        <select id="area" name="Area">
+          <option value="" selected>Not applicable</option>
         </select>
       </div>
 
       <div class="field">
-        <label for="roomNo">Room No. <span class="required-mark">*</span></label>
-        <select id="roomNo" name="Room No" required disabled>
-          <option value="" disabled selected>Select area first</option>
-        </select>
+        <label for="roomNo">Room No. <span class="hint">(if applicable)</span></label>
+        <input type="text" id="roomNo" name="Room No" autocomplete="off">
       </div>
     </div>
 
@@ -467,20 +463,13 @@ const designationData = [
   "Other"
 ];
 
-/* ====== DATA: WARD NO. / ZONE NO. ====== */
-// Edit these ranges to match your corporation's actual ward/zone count.
+/* ====== DATA: WARD NO. ====== */
+// Edit this range to match your corporation's actual ward count.
 const wardCount = 47;
-const zoneCount = 6;
 
-/* ====== DATA: AREA -> ROOM NO. ====== */
-function roomsForArea(){
-  return ["001", "002", "003", "004", "005"];
-}
-const areaData = {
-  "NIT": roomsForArea(),
-  "OLD": roomsForArea(),
-  "BLB": roomsForArea()
-};
+/* ====== DATA: AREA ====== */
+// Independent list — not tied to Room No. anymore.
+const areaList = ["BALLABHGARH ZONE MCF", "CHANDAWALI (GR. FBD)", "CMC CAMP OFFICE", "LIBRARY", "MAYOR CAMP OFFICE", "NA", "NIT (BK CHOWK)", "NIT ZONE-III (PYALI CHOWK)", "OLD ZONE MCF", "WARD 03-04 (SEC-25 BOOSTING)", "WARD 07-11 & SUB-DIV OFFICE (NIT-3 PULIYA)", "WARD-15, NURSERY BAGH, NIT 5, HORTICULTURE", "WARD 20-21 (SEC-45 NHPC METRO)", "WARD - 36 (SEC - 16 LAXMI NARAYAN MANDIR)", "WARD 37 (SECTOR - 9)", "WARD 40 & 43 (SEC-03)", "WARD 45-46 (DUSHERA GRND BLB)"];
 
 /* ====== BUILD BRANCH DROPDOWN ====== */
 const branchSelect = document.getElementById("branch");
@@ -579,10 +568,8 @@ const designationOtherInput = document.getElementById("designationOther");
 designationSelect.addEventListener("change", function(){
   if (this.value === "Other"){
     designationOtherWrap.style.display = "block";
-    designationOtherInput.setAttribute("required", "required");
   } else {
     designationOtherWrap.style.display = "none";
-    designationOtherInput.removeAttribute("required");
     designationOtherInput.value = "";
   }
 });
@@ -615,39 +602,13 @@ const wardOtherWrap = document.getElementById("wardOtherWrap");
 const wardOtherInput = document.getElementById("wardOther");
 buildNumberedSelect(wardSelect, wardCount, wardOtherWrap, wardOtherInput);
 
-const zoneSelect = document.getElementById("zoneNo");
-const zoneOtherWrap = document.getElementById("zoneOtherWrap");
-const zoneOtherInput = document.getElementById("zoneOther");
-buildNumberedSelect(zoneSelect, zoneCount, zoneOtherWrap, zoneOtherInput);
-
 /* ====== BUILD AREA DROPDOWN ====== */
 const areaSelect = document.getElementById("area");
-Object.keys(areaData).forEach(function(area){
+areaList.forEach(function(area){
   const opt = document.createElement("option");
   opt.value = area;
   opt.textContent = area;
   areaSelect.appendChild(opt);
-});
-
-const roomSelect = document.getElementById("roomNo");
-areaSelect.addEventListener("change", function(){
-  const rooms = areaData[this.value] || [];
-  roomSelect.innerHTML = "";
-
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "Select room";
-  placeholder.disabled = true;
-  placeholder.selected = true;
-  roomSelect.appendChild(placeholder);
-
-  rooms.forEach(function(room){
-    const opt = document.createElement("option");
-    opt.value = room;
-    opt.textContent = room;
-    roomSelect.appendChild(opt);
-  });
-  roomSelect.disabled = rooms.length === 0;
 });
 
 /* ====== SUBMIT HANDLER ====== */
@@ -700,12 +661,8 @@ form.addEventListener("submit", function(e){
     subBranchSelect.innerHTML = '<option value="" selected>Not applicable</option>';
     subBranchSelect.disabled = true;
     resetOfficeDropdown();
-    roomSelect.innerHTML = '<option value="" disabled selected>Select area first</option>';
-    roomSelect.disabled = true;
     designationOtherWrap.style.display = "none";
-    designationOtherInput.removeAttribute("required");
     wardOtherWrap.style.display = "none";
-    zoneOtherWrap.style.display = "none";
     statusMsg.textContent = "";
   })
   .catch(function(err){
