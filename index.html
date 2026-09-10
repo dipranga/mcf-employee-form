@@ -267,6 +267,10 @@
         <input type="text" id="roomNo" name="Room No" autocomplete="off">
       </div>
     </div>
+    <div class="field" id="areaOtherWrap" style="display:none;">
+      <label for="areaOther">Please specify area</label>
+      <input type="text" id="areaOther" name="Area (Other)" autocomplete="off">
+    </div>
 
     <div class="row2">
       <div class="field">
@@ -611,6 +615,21 @@ areaList.forEach(function(area){
   opt.textContent = area;
   areaSelect.appendChild(opt);
 });
+const areaOtherOpt = document.createElement("option");
+areaOtherOpt.value = "Other";
+areaOtherOpt.textContent = "Other";
+areaSelect.appendChild(areaOtherOpt);
+
+const areaOtherWrap = document.getElementById("areaOtherWrap");
+const areaOtherInput = document.getElementById("areaOther");
+areaSelect.addEventListener("change", function(){
+  if (this.value === "Other"){
+    areaOtherWrap.style.display = "block";
+  } else {
+    areaOtherWrap.style.display = "none";
+    areaOtherInput.value = "";
+  }
+});
 
 /* ====== SUBMIT HANDLER ====== */
 const form = document.getElementById("employeeForm");
@@ -664,6 +683,7 @@ form.addEventListener("submit", function(e){
     resetOfficeDropdown();
     designationOtherWrap.style.display = "none";
     wardOtherWrap.style.display = "none";
+    areaOtherWrap.style.display = "none";
     statusMsg.textContent = "";
   })
   .catch(function(err){
