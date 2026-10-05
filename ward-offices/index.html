@@ -55,6 +55,10 @@
             <div class="col-6"><input class="form-control form-control-sm" id="link" name="maps_link" placeholder="Google Maps link" readonly></div>
           </div>
         </div>
+        <div class="mb-3">
+          <label class="form-label">Remarks</label>
+          <textarea class="form-control" name="remarks" rows="2" maxlength="500" placeholder="Optional"></textarea>
+        </div>
         <hr>
         <div class="row g-3 mb-3">
           <div class="col-md-6">
@@ -77,8 +81,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 // ====== CONFIG ======
-const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
-const TOTAL_WARDS = 25; // change if needed
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi2xKgYKN--Jzxbt5qE36rnmDkLrazYD1JxDZr6iptCy3DzCyqzoCpDPcVejDy-AjMIQ/exec";
+const TOTAL_WARDS = 46; // change if needed
 // ====================
 
 const wardsEl = document.getElementById('wards');
