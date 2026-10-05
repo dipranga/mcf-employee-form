@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCF Micro Sub Office Form</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+<style>
+  body{background:#f4f6f9}
+  #map{height:320px;border-radius:.5rem;border:1px solid #ced4da}
+  .ward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:.4rem}
+  .ward-grid label{border:1px solid #ced4da;border-radius:.4rem;padding:.3rem .5rem;cursor:pointer;background:#fff;font-size:.9rem}
+  .ward-grid input:checked + span{font-weight:700;color:#0d6efd}
+</style>
+</head>
+<body>
+<div class="container py-4" style="max-width:720px">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white"><h5 class="mb-0">MCF Faridabad – Micro Sub Office Details</h5></div>
+    <div class="card-body">
+      <form id="f" novalidate>
+        <div class="mb-3">
+          <label class="form-label">Branch Type <span class="text-danger">*</span></label>
+          <select class="form-select" name="branch" required>
+            <option value="">-- Select Branch --</option>
+            <option>Civil</option><option>Electrical</option><option>Horticulture</option><option>Mechanical</option>
+            <option>Advertisement</option><option>Enforcement</option><option>CLIP</option><option>SBM</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Office Name <span class="text-danger">*</span></label>
+          <input class="form-control" name="office_name" required maxlength="150">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Office Address <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="address" rows="2" required maxlength="300"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Ward No. (select one or more) <span class="text-danger">*</span></label>
+          <div class="ward-grid" id="wards"></div>
+          <div class="text-danger small d-none" id="wardErr">Select at least one ward.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Location on Map</label>
+          <div class="d-flex gap-2 mb-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="locBtn">📍 Use my current location</button>
+            <span class="small text-muted align-self-center">or tap / drag the pin on the map</span>
+          </div>
+          <div id="map"></div>
+          <div class="row g-2 mt-1">
+            <div class="col-6"><input class="form-control form-control-sm" id="lat" name="latitude" placeholder="Latitude" readonly></div>
+            <div class="col-6"><input class="form-control form-control-sm" id="lng" name="longitude" placeholder="Longitude" readonly></div>
+            <div class="col-6"><input class="form-control form-control-sm" id="plus" name="plus_code" placeholder="Plus Code" readonly></div>
+            <div class="col-6"><input class="form-control form-control-sm" id="link" name="maps_link" placeholder="Google Maps link" readonly></div>
+          </div>
+        </div>
+        <hr>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Your Name <span class="text-danger">*</span></label>
+            <input class="form-control" name="submitter_name" required maxlength="100">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Mobile No. <span class="text-danger">*</span></label>
+            <input class="form-control" name="submitter_mobile" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" required>
+            <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100" id="sub" type="submit">Submit</button>
+        <div id="msg" class="mt-3"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+// ====== CONFIG ======
+const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const TOTAL_WARDS = 25; // change if needed
+// ====================
+
+const wardsEl = document.getElementById('wards');
+for (let i = 1; i <= TOTAL_WARDS; i++)
+  wardsEl.insertAdjacentHTML('beforeend', `<label><input type="checkbox" class="form-check-input d-none" value="${i}"><span>Ward ${i}</span></label>`);
+
+// Plus Code (Open Location Code, 10 digits)
+function plusCode(lat, lng) {
+  const A = '23456789CFGHJMPQRVWX';
+  let la = Math.floor((Math.min(Math.max(lat, -90), 89.999999) + 90) * 8000 + 1e-7);
+  let ln = Math.floor((((lng + 180) % 360 + 360) % 360) * 8000 + 1e-7);
+  let c = '';
+  for (let i = 0; i < 5; i++) { c = A[la % 20] + A[ln % 20] + c; la = Math.floor(la / 20); ln = Math.floor(ln / 20); }
+  return c.slice(0, 8) + '+' + c.slice(8);
+}
+
+L.Icon.Default.imagePath = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/';
+const map = L.map('map').setView([28.4089, 77.3178], 12);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
+let marker = null;
+
+function setPoint(lat, lng, pan) {
+  if (!marker) {
+    marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+    marker.on('dragend', () => { const p = marker.getLatLng(); setPoint(p.lat, p.lng, false); });
+  } else marker.setLatLng([lat, lng]);
+  if (pan) map.setView([lat, lng], 17);
+  lat = +lat.toFixed(6); lng = +lng.toFixed(6);
+  document.getElementById('lat').value = lat;
+  document.getElementById('lng').value = lng;
+  document.getElementById('plus').value = plusCode(lat, lng);
+  document.getElementById('link').value = `https://www.google.com/maps?q=${lat},${lng}`;
+}
+map.on('click', e => setPoint(e.latlng.lat, e.latlng.lng, false));
+
+document.getElementById('locBtn').onclick = () => {
+  if (!navigator.geolocation) return alert('Geolocation not supported on this device.');
+  navigator.geolocation.getCurrentPosition(
+    p => setPoint(p.coords.latitude, p.coords.longitude, true),
+    () => alert('Could not get location. Please allow location access or pin it manually on the map.'),
+    {enableHighAccuracy: true, timeout: 15000});
+};
+
+const f = document.getElementById('f'), msg = document.getElementById('msg'), btn = document.getElementById('sub');
+f.addEventListener('submit', async e => {
+  e.preventDefault();
+  const wards = [...wardsEl.querySelectorAll('input:checked')].map(i => i.value);
+  document.getElementById('wardErr').classList.toggle('d-none', wards.length > 0);
+  f.classList.add('was-validated');
+  if (!f.checkValidity() || !wards.length) return;
+  if (!document.getElementById('lat').value && !confirm('No map location selected. Submit without it?')) return;
+
+  const data = new URLSearchParams(new FormData(f));
+  data.set('wards', wards.join(', '));
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  try {
+    await fetch(SCRIPT_URL, {method: 'POST', mode: 'no-cors', body: data});
+    msg.innerHTML = '<div class="alert alert-success">Submitted successfully. Thank you!</div>';
+    f.reset(); f.classList.remove('was-validated');
+    wardsEl.querySelectorAll('input').forEach(i => i.checked = false);
+    if (marker) { map.removeLayer(marker); marker = null; }
+  } catch (err) {
+    msg.innerHTML = '<div class="alert alert-danger">Submission failed. Check your connection and try again.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Submit';
+});
+</script>
+</body>
+</html>
