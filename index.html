@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCF Forms</title>
+<style>
+  :root {
+    --bg: #f3f6f4;
+    --ink: #14211c;
+    --muted: #5b6b64;
+    --card: #ffffff;
+    --line: #cfd9d4;
+    --accent: #0f6b57;
+    --accent-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1714;
+      --ink: #e8f0ec;
+      --muted: #93a39b;
+      --card: #172420;
+      --line: #2a3b35;
+      --accent: #3fc3a0;
+      --accent-ink: #06231b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 20px 64px;
+  }
+  h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  p.sub { margin: 0 0 28px; color: var(--muted); }
+  #forms { display: grid; gap: 12px; }
+  a.form-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--card);
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  a.form-btn small { display: block; font-weight: 400; color: var(--muted); font-size: .88rem; }
+  a.form-btn .go {
+    flex: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: .9rem;
+  }
+  a.form-btn:hover { border-color: var(--accent); }
+  a.form-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  footer { margin-top: 32px; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>MCF Forms</h1>
+  <p class="sub">Choose the form you need to fill out.</p>
+
+  <div id="forms"></div>
+
+  <footer>Can't find your form? Contact the MCF team.</footer>
+</main>
+
+<script>
+  // EDIT HERE: add, remove or rename forms. Each line = one button.
+  // name: text on the button | desc: optional small text | url: link to the form
+  const forms = [
+    { name: "Form 1 – Employee Form",  desc: "Reg. Form for CeFMaTIS and IT Inventory Portal",   url: "employee-form/" },
+    { name: "Form 2 – Ward Offices",      desc: "Form for data collection on different micro ward offices",     url: "ward-offices/" }
+  ];
+
+  const box = document.getElementById("forms");
+  forms.forEach(f => {
+    const a = document.createElement("a");
+    a.className = "form-btn";
+    a.href = f.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    const text = document.createElement("span");
+    text.textContent = f.name;
+    if (f.desc) {
+      const s = document.createElement("small");
+      s.textContent = f.desc;
+      text.appendChild(s);
+    }
+    const go = document.createElement("span");
+    go.className = "go";
+    go.textContent = "Open";
+    a.append(text, go);
+    box.appendChild(a);
+  });
+</script>
+</body>
+</html>
