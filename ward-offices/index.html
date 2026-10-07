@@ -4,79 +4,191 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MCF Micro Sub Office Form</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
 <style>
-  body{background:#f4f6f9}
-  #map{height:320px;border-radius:.5rem;border:1px solid #ced4da}
-  .ward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:.4rem}
-  .ward-grid label{border:1px solid #ced4da;border-radius:.4rem;padding:.3rem .5rem;cursor:pointer;background:#fff;font-size:.9rem}
-  .ward-grid input:checked + span{font-weight:700;color:#0d6efd}
+  :root{
+    --ink:#1c2b3a;
+    --ink-soft:#4a5b6c;
+    --line:#d7dde3;
+    --field-bg:#f6f8fa;
+    --accent:#0b5fa5;
+    --accent-dark:#08477d;
+    --ok-bg:#e8f4ea;
+    --ok-ink:#1f6b3a;
+    --err:#b3261e;
+    --paper:#ffffff;
+    --canvas:#eef2f5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+    background:var(--canvas);
+    color:var(--ink);
+    padding:32px 16px 64px;
+  }
+  .sheet{
+    max-width:720px;
+    margin:0 auto;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .letterhead{
+    background:var(--accent-dark);
+    color:#fff;
+    padding:22px 28px;
+    border-bottom:4px solid var(--accent);
+  }
+  .letterhead .dept{font-size:13px;letter-spacing:.02em;opacity:.85;margin:0 0 4px;}
+  .letterhead h1{font-size:21px;margin:0 0 6px;font-weight:600;}
+  .letterhead p{margin:0;font-size:13px;opacity:.9;line-height:1.5;}
+  form{padding:28px;}
+  .field{margin-bottom:18px;}
+  .field label.lbl{display:block;font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+  .field .hint{font-weight:400;color:var(--ink-soft);font-size:12px;}
+  .field input[type=text],
+  .field input[type=number],
+  .field input[type=tel],
+  .field select,
+  .field textarea{
+    width:100%;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+    background:var(--field-bg);
+    border:1px solid var(--line);
+    border-radius:4px;
+    outline:none;
+    transition:border-color .15s, background .15s;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);background:#fff;}
+  .field input[readonly]{background:#eceff2;color:var(--ink-soft);}
+  .field textarea{resize:vertical;min-height:64px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .row2.addr{grid-template-columns:2fr 1fr;}
+  @media (max-width:520px){.row2,.row2.addr{grid-template-columns:1fr;}}
+  .required-mark{color:var(--err);margin-left:2px;}
+  .invalid{border-color:var(--err)!important;}
+  .errtxt{color:var(--err);font-size:12px;margin-top:4px;display:none;}
+
+  .ward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px;}
+  .ward-grid label{cursor:pointer;}
+  .ward-grid input{position:absolute;opacity:0;pointer-events:none;}
+  .ward-grid span{
+    display:block;text-align:center;padding:7px 4px;font-size:13px;
+    background:var(--field-bg);border:1px solid var(--line);border-radius:4px;
+    transition:all .15s;
+  }
+  .ward-grid input:checked + span{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .ward-grid input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .map-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .btn-sec{
+    background:#fff;color:var(--accent);border:1px solid var(--accent);
+    padding:8px 14px;font-size:13px;font-weight:600;border-radius:4px;cursor:pointer;font-family:inherit;
+  }
+  .btn-sec:hover{background:var(--accent);color:#fff;}
+  #map{height:300px;border-radius:4px;border:1px solid var(--line);}
+  .loc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .loc-grid input{font-size:13px!important;padding:8px 10px!important;}
+  .divider{border:0;border-top:1px solid var(--line);margin:24px 0;}
+
+  .submit-row{margin-top:26px;display:flex;align-items:center;gap:14px;}
+  button[type="submit"]{
+    background:var(--accent);color:#fff;border:none;padding:12px 26px;
+    font-size:14.5px;font-weight:600;border-radius:4px;cursor:pointer;transition:background .15s;font-family:inherit;
+  }
+  button[type="submit"]:hover{background:var(--accent-dark);}
+  button[type="submit"]:disabled{background:#9fb6c7;cursor:not-allowed;}
+  .banner{display:none;margin:0 28px 28px;padding:14px 16px;border-radius:4px;font-size:14px;}
+  .banner.show{display:block;}
+  .banner.ok{background:var(--ok-bg);color:var(--ok-ink);border:1px solid #bfe0c6;}
+  .banner.err{background:#fbeceb;color:var(--err);border:1px solid #f0c4c1;}
+  .foot-note{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:18px;}
 </style>
 </head>
 <body>
-<div class="container py-4" style="max-width:720px">
-  <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white"><h5 class="mb-0">MCF Faridabad – Micro Sub Office Details</h5></div>
-    <div class="card-body">
-      <form id="f" novalidate>
-        <div class="mb-3">
-          <label class="form-label">Branch Type <span class="text-danger">*</span></label>
-          <select class="form-select" name="branch" required>
-            <option value="">-- Select Branch --</option>
-            <option>Civil</option><option>Electrical</option><option>Horticulture</option><option>Mechanical</option>
-            <option>Advertisement</option><option>Enforcement</option><option>CLIP</option><option>SBM</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Office Name <span class="text-danger">*</span></label>
-          <input class="form-control" name="office_name" required maxlength="150">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Office Address <span class="text-danger">*</span></label>
-          <textarea class="form-control" name="address" rows="2" required maxlength="300"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Ward No. (select one or more) <span class="text-danger">*</span></label>
-          <div class="ward-grid" id="wards"></div>
-          <div class="text-danger small d-none" id="wardErr">Select at least one ward.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Location on Map</label>
-          <div class="d-flex gap-2 mb-2">
-            <button type="button" class="btn btn-outline-primary btn-sm" id="locBtn">📍 Use my current location</button>
-            <span class="small text-muted align-self-center">or tap / drag the pin on the map</span>
-          </div>
-          <div id="map"></div>
-          <div class="row g-2 mt-1">
-            <div class="col-6"><input class="form-control form-control-sm" id="lat" name="latitude" placeholder="Latitude" readonly></div>
-            <div class="col-6"><input class="form-control form-control-sm" id="lng" name="longitude" placeholder="Longitude" readonly></div>
-            <div class="col-6"><input class="form-control form-control-sm" id="plus" name="plus_code" placeholder="Plus Code" readonly></div>
-            <div class="col-6"><input class="form-control form-control-sm" id="link" name="maps_link" placeholder="Google Maps link" readonly></div>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Remarks</label>
-          <textarea class="form-control" name="remarks" rows="2" maxlength="500" placeholder="Optional"></textarea>
-        </div>
-        <hr>
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Your Name <span class="text-danger">*</span></label>
-            <input class="form-control" name="submitter_name" required maxlength="100">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Mobile No. <span class="text-danger">*</span></label>
-            <input class="form-control" name="submitter_mobile" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" required>
-            <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
-          </div>
-        </div>
-        <button class="btn btn-primary w-100" id="sub" type="submit">Submit</button>
-        <div id="msg" class="mt-3"></div>
-      </form>
-    </div>
+<div class="sheet">
+  <div class="letterhead">
+    <p class="dept">Municipal Corporation Faridabad (MCF)</p>
+    <h1>Ward & Micro Sub Office Details & Location</h1>
+    <p>Please fill in the details of the ward & micro sub office. Fields marked with <span style="color:#ffb4ab">*</span> are required.</p>
   </div>
+
+  <form id="f" novalidate>
+    <div class="field">
+      <label class="lbl" for="branch">Branch Type<span class="required-mark">*</span></label>
+      <select id="branch" name="branch" required>
+        <option value="">-- Select Branch --</option>
+        <option>Civil</option><option>Electrical</option><option>Horticulture</option><option>Mechanical</option>
+        <option>Advertisement</option><option>Enforcement</option><option>CLIP</option><option>SBM</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="office_name">Office Name<span class="required-mark">*</span></label>
+      <input type="text" id="office_name" name="office_name" required maxlength="150" placeholder="WARD 20-21 (SEC-45 NHPC METRO)">
+    </div>
+
+    <div class="row2 addr">
+      <div class="field">
+        <label class="lbl" for="address">Office Address<span class="required-mark">*</span></label>
+        <textarea id="address" name="address" rows="2" required maxlength="300"></textarea>
+      </div>
+      <div class="field">
+        <label class="lbl" for="rooms">No. of Rooms<span class="required-mark">*</span></label>
+        <input type="number" id="rooms" name="rooms" min="0" max="999" step="1" inputmode="numeric" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Ward No. <span class="hint">(select one or more)</span><span class="required-mark">*</span></label>
+      <div class="ward-grid" id="wards"></div>
+      <div class="errtxt" id="wardErr">Select at least one ward.</div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Location on Map <span class="hint">(optional)</span></label>
+      <div class="map-tools">
+        <button type="button" class="btn-sec" id="locBtn">Use my current location</button>
+        <span class="hint">or tap / drag the pin on the map</span>
+      </div>
+      <div id="map"></div>
+      <div class="loc-grid">
+        <input type="text" id="lat" name="latitude" placeholder="Latitude" readonly>
+        <input type="text" id="lng" name="longitude" placeholder="Longitude" readonly>
+        <input type="text" id="plus" name="plus_code" placeholder="Plus Code" readonly>
+        <input type="text" id="link" name="maps_link" placeholder="Google Maps link" readonly>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="remarks">Remarks <span class="hint">(optional)</span></label>
+      <textarea id="remarks" name="remarks" rows="2" maxlength="500"></textarea>
+    </div>
+
+    <hr class="divider">
+
+    <div class="row2">
+      <div class="field">
+        <label class="lbl" for="sname">Your Name<span class="required-mark">*</span></label>
+        <input type="text" id="sname" name="submitter_name" required maxlength="100">
+      </div>
+      <div class="field">
+        <label class="lbl" for="smob">Mobile No.<span class="required-mark">*</span></label>
+        <input type="tel" id="smob" name="submitter_mobile" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" required>
+        <div class="errtxt" id="mobErr">Enter a valid 10-digit mobile number.</div>
+      </div>
+    </div>
+
+    <div class="submit-row"><button type="submit" id="sub">Submit</button></div>
+  </form>
+  <div id="banner" class="banner"></div>
 </div>
+<p class="foot-note">Municipal Corporation Faridabad &middot; Data is collected for official use only.</p>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
@@ -87,9 +199,8 @@ const TOTAL_WARDS = 46; // change if needed
 
 const wardsEl = document.getElementById('wards');
 for (let i = 1; i <= TOTAL_WARDS; i++)
-  wardsEl.insertAdjacentHTML('beforeend', `<label><input type="checkbox" class="form-check-input d-none" value="${i}"><span>Ward ${i}</span></label>`);
+  wardsEl.insertAdjacentHTML('beforeend', `<label><input type="checkbox" value="${i}"><span>Ward ${i}</span></label>`);
 
-// Plus Code (Open Location Code, 10 digits)
 function plusCode(lat, lng) {
   const A = '23456789CFGHJMPQRVWX';
   let la = Math.floor((Math.min(Math.max(lat, -90), 89.999999) + 90) * 8000 + 1e-7);
@@ -126,13 +237,23 @@ document.getElementById('locBtn').onclick = () => {
     {enableHighAccuracy: true, timeout: 15000});
 };
 
-const f = document.getElementById('f'), msg = document.getElementById('msg'), btn = document.getElementById('sub');
+const f = document.getElementById('f'), banner = document.getElementById('banner'), btn = document.getElementById('sub');
+function show(type, text){ banner.className = 'banner show ' + type; banner.textContent = text; banner.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+
 f.addEventListener('submit', async e => {
   e.preventDefault();
+  banner.className = 'banner';
+  let ok = true;
+  f.querySelectorAll('[required]').forEach(el => {
+    const bad = !el.checkValidity();
+    el.classList.toggle('invalid', bad);
+    if (bad) ok = false;
+  });
+  document.getElementById('mobErr').style.display = document.getElementById('smob').classList.contains('invalid') ? 'block' : 'none';
   const wards = [...wardsEl.querySelectorAll('input:checked')].map(i => i.value);
-  document.getElementById('wardErr').classList.toggle('d-none', wards.length > 0);
-  f.classList.add('was-validated');
-  if (!f.checkValidity() || !wards.length) return;
+  document.getElementById('wardErr').style.display = wards.length ? 'none' : 'block';
+  if (!wards.length) ok = false;
+  if (!ok) { show('err', 'Please correct the highlighted fields.'); return; }
   if (!document.getElementById('lat').value && !confirm('No map location selected. Submit without it?')) return;
 
   const data = new URLSearchParams(new FormData(f));
@@ -140,15 +261,16 @@ f.addEventListener('submit', async e => {
   btn.disabled = true; btn.textContent = 'Submitting...';
   try {
     await fetch(SCRIPT_URL, {method: 'POST', mode: 'no-cors', body: data});
-    msg.innerHTML = '<div class="alert alert-success">Submitted successfully. Thank you!</div>';
-    f.reset(); f.classList.remove('was-validated');
+    show('ok', 'Submitted successfully. Thank you!');
+    f.reset();
     wardsEl.querySelectorAll('input').forEach(i => i.checked = false);
     if (marker) { map.removeLayer(marker); marker = null; }
   } catch (err) {
-    msg.innerHTML = '<div class="alert alert-danger">Submission failed. Check your connection and try again.</div>';
+    show('err', 'Submission failed. Check your connection and try again.');
   }
   btn.disabled = false; btn.textContent = 'Submit';
 });
+f.addEventListener('input', e => e.target.classList.remove('invalid'));
 </script>
 </body>
 </html>
